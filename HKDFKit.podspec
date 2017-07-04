@@ -80,7 +80,12 @@ Pod::Spec.new do |s|
   #  For header files it will include any header in the folder.
   #  Not including the public_header_files will make all headers public.
   #
-  s.source_files = "FrameworkKit/**/*.{swift}"
+  s.source_files = 'HKDFKit/**/*.{swift,h}'
+  s.preserve_paths = 'CommonCrypto/*'
+  s.pod_target_xcconfig = {
+  	'SWIFT_INCLUDE_PATHS' => '$(PODS_TARGET_SRCROOT)/CommonCrypto',
+  }
+
 
   # ――― Project Linking ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   #
