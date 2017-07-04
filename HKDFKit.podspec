@@ -29,6 +29,7 @@ Pod::Spec.new do |s|
                    DESC
 
   s.homepage     = "https://github.com/silenteh"
+  s.dependency pod 'CommonCrypto', :git => 'https://github.com/psalami/HKDFKit.git', :branch => 'podspec-fix'
 
 
   # ―――  Spec License  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
