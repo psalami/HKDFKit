@@ -13,23 +13,27 @@ public final class HMAC {
     var context: CCHmacContext = CCHmacContext()
     var algorithm:HKDFKit.Hash
     
-    init(algorithm: HKDFKit.Hash, key: NSData) {
+    init(algorithm: HKDFKit.Hash, key: Data) {
         self.algorithm = algorithm
         CCHmacInit(
             &context,
             algorithm.function,
-            key.bytes,
-            key.length
+            (key as NSData).bytes,
+            key.count
         )
     }
     
-    func updateWithData(data: NSData) {
-        CCHmacUpdate(&context, data.bytes, data.length)
+    func updateWithData(_ data: Data) {
+        //CCHmacUpdate(&context, (data as NSData).bytes, data.count)
+		data.withUnsafeBytes({ (dataPtr) -> Void in
+			CCHmacUpdate(&context, dataPtr, data.count)
+		})
+		
     }
     
-    func finalData() -> NSData {
+    func finalData() -> Data {
         let hmac = NSMutableData(length: algorithm.length)!
         CCHmacFinal(&context, hmac.mutableBytes)
-        return hmac
+        return hmac as Data
     }
 }

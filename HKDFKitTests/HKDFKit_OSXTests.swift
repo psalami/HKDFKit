@@ -30,7 +30,7 @@ class HKDFKitTests: XCTestCase {
         
         let OKM  = "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
         
-        let hkdf:NSData = HKDFKit.deriveKey(HKDFKit.Hash.SHA256, seed: IKM.dataFromHexString(), info: info.dataFromHexString(), salt: salt.dataFromHexString(), outputSize: l)
+        let hkdf:Data = HKDFKit.deriveKey(HKDFKit.Hash.sha256, seed: IKM.dataFromHexString(), info: info.dataFromHexString(), salt: salt.dataFromHexString(), outputSize: l)
         
         XCTAssert(hkdf.toHexString() == OKM, "First RFC test case with SHA-256")
         
@@ -48,7 +48,7 @@ class HKDFKitTests: XCTestCase {
         
         let OKM  = "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"
         
-        let hkdf:NSData = HKDFKit.deriveKey(HKDFKit.Hash.SHA256, seed: IKM.dataFromHexString(), info: info.dataFromHexString(), salt: salt.dataFromHexString(), outputSize: l)
+        let hkdf:Data = HKDFKit.deriveKey(HKDFKit.Hash.sha256, seed: IKM.dataFromHexString(), info: info.dataFromHexString(), salt: salt.dataFromHexString(), outputSize: l)
         
         XCTAssert(hkdf.toHexString() == OKM, "Second RFC test case with SHA-256")
         
@@ -57,13 +57,13 @@ class HKDFKitTests: XCTestCase {
     func testThirdRFCExample() {
         
         let IKM  = "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
-        let salt = NSData()
-        let info = NSData()
+        let salt = Data()
+        let info = Data()
         let l    = 42
         
         let OKM  = "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8"
         
-        let hkdf:NSData = HKDFKit.deriveKey(HKDFKit.Hash.SHA256, seed: IKM.dataFromHexString(), info: info, salt: salt, outputSize: l)
+        let hkdf:Data = HKDFKit.deriveKey(HKDFKit.Hash.sha256, seed: IKM.dataFromHexString(), info: info, salt: salt, outputSize: l)
         
         XCTAssert(hkdf.toHexString() == OKM, "Third RFC test case with SHA-256")
         
@@ -73,7 +73,7 @@ class HKDFKitTests: XCTestCase {
     
     func testPerformanceExample() {
         // This is an example of a performance test case.
-        self.measureBlock {
+        self.measure {
             // Put the code you want to measure the time of here.
         }
     }

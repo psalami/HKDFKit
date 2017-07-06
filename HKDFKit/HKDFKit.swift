@@ -9,31 +9,31 @@
 import Foundation
 import CommonCrypto
 
-public class HKDFKit {
+open class HKDFKit {
     
     // MARK: - Types
     
     public enum Hash {
-        case SHA256
-        case SHA384
-        case SHA512
-        case SHA224
+        case sha256
+        case sha384
+        case sha512
+        case sha224
         
         public var function: CCHmacAlgorithm {
             switch self {
-            case .SHA224: return CCHmacAlgorithm(kCCHmacAlgSHA224)
-            case .SHA256: return CCHmacAlgorithm(kCCHmacAlgSHA256)
-            case .SHA384: return CCHmacAlgorithm(kCCHmacAlgSHA384)
-            case .SHA512: return CCHmacAlgorithm(kCCHmacAlgSHA512)
+            case .sha224: return CCHmacAlgorithm(kCCHmacAlgSHA224)
+            case .sha256: return CCHmacAlgorithm(kCCHmacAlgSHA256)
+            case .sha384: return CCHmacAlgorithm(kCCHmacAlgSHA384)
+            case .sha512: return CCHmacAlgorithm(kCCHmacAlgSHA512)
             }
         }
         
         public var length: Int {
             switch self {
-            case .SHA224: return Int(CC_SHA224_DIGEST_LENGTH)
-            case .SHA256: return Int(CC_SHA256_DIGEST_LENGTH)
-            case .SHA384: return Int(CC_SHA384_DIGEST_LENGTH)
-            case .SHA512: return Int(CC_SHA512_DIGEST_LENGTH)
+            case .sha224: return Int(CC_SHA224_DIGEST_LENGTH)
+            case .sha256: return Int(CC_SHA256_DIGEST_LENGTH)
+            case .sha384: return Int(CC_SHA384_DIGEST_LENGTH)
+            case .sha512: return Int(CC_SHA512_DIGEST_LENGTH)
             }
         }
     }
@@ -49,7 +49,7 @@ public class HKDFKit {
      *
      *  @return The derived key material
      */
-    static func deriveKey(algorithm: Hash, seed:NSData, info:NSData, salt:NSData, outputSize:Int) -> NSData {
+    static func deriveKey(_ algorithm: Hash, seed:Data, info:Data, salt:Data, outputSize:Int) -> Data {
         return deriveKey(algorithm, seed:seed, info:info, salt:salt, outputSize:outputSize, offset:1)
     }
     
@@ -65,56 +65,58 @@ public class HKDFKit {
     *  @return The derived key material
     */
     
-    static func TextSecureV2deriveKey(algorithm: Hash, seed:NSData, info:NSData, salt:NSData, outputSize:Int) -> NSData {
+    static func TextSecureV2deriveKey(_ algorithm: Hash, seed:Data, info:Data, salt:Data, outputSize:Int) -> Data {
         return deriveKey(algorithm, seed:seed, info:info, salt:salt, outputSize:outputSize, offset:0)
     }
     
     // MARK: - Private Methods
-    private static func deriveKey(algorithm: Hash,
-        seed:NSData, info:NSData, salt:NSData, outputSize:Int, offset:Int) -> NSData {
+    fileprivate static func deriveKey(_ algorithm: Hash,
+        seed:Data, info:Data, salt:Data, outputSize:Int, offset:Int) -> Data {
             
         // extract phase
-        let prk:NSData = extract(algorithm, key: seed, salt: salt)
+        let prk:Data = extract(algorithm, key: seed, salt: salt)
             
         // expand phase
-        let okm:NSData = expand(algorithm, prk: prk, info: info, outputSize: outputSize, offset: offset)
+        let okm:Data = expand(algorithm, prk: prk, info: info, outputSize: outputSize, offset: offset)
         return okm;
     }
     
-    internal static func extract(algorithm: Hash, key:NSData, salt:NSData) -> NSData {
+    internal static func extract(_ algorithm: Hash, key:Data, salt:Data) -> Data {
         
         // simpler variant
         //var prk = [CChar](count:algorithm.length, repeatedValue: 0)
         
         // malloc the pointer
-        let prk = UnsafeMutablePointer<CChar>.alloc(algorithm.length)
+        let prk = UnsafeMutablePointer<CChar>.allocate(capacity: algorithm.length)
         // initialize the pointer so that it does nto contain garbage
-        prk.initialize(0)        
+        prk.initialize(to: 0)        
         
-        CCHmac(algorithm.function, salt.bytes, salt.length, key.bytes, key.length, prk);
-        
-        let result = NSData(bytes: prk, length: algorithm.length)
+        CCHmac(algorithm.function, (salt as NSData).bytes, salt.count, (key as NSData).bytes, key.count, prk);
+		let result: Data = Data(bytes: prk, count:algorithm.length)
+		/*let result:Data = prk.withMemoryRebound(to: UInt8.self, capacity: algorithm.length, { (prkRebound) in
+			return Data(bytes: prkRebound, count: algorithm.length)
+		})*/
+		
         
         // destroy the pointer (we clean up the memory)
-        prk.destroy()
+        prk.deinitialize()
         // free the pointer
-        prk.dealloc(algorithm.length)
+        prk.deallocate(capacity: algorithm.length)
         
         return result
         
     }
 
     // prk = pseudo random key. Please note this is NOT a password !!!
-    internal static func expand(algorithm: Hash, prk:NSData, info:NSData, outputSize:Int, offset:Int) -> NSData {
+    internal static func expand(_ algorithm: Hash, prk:Data, info:Data, outputSize:Int, offset:Int) -> Data {
         // calculate N in T(N)
         let iterations = Int(ceil(Double(outputSize)/Double(algorithm.length)))
         
-        var mixin = NSData()
+        var mixin = Data()
         
         let results = NSMutableData()
 
-        var index: Int
-        for index = offset; index < iterations + offset; ++index {
+        for var index in offset ..< (iterations + offset) {
             
             let hmac = HMAC(algorithm: algorithm, key: prk)
         
@@ -123,21 +125,22 @@ public class HKDFKit {
                 hmac.updateWithData(mixin)
             }
             
-            if info.length > 0 {
+            if info.count > 0 {
                 hmac.updateWithData(info)
             }
-            
-            let counter = NSData(bytes: &index, length: 1)
-            
-            hmac.updateWithData(counter)
-        
-            let stepResult = NSData(bytes:hmac.finalData().bytes, length:hmac.finalData().length)
-            
-            results.appendData(stepResult)
-            mixin = stepResult.copy() as! NSData
-        }
+			
+			let counter = Data(buffer: UnsafeBufferPointer(start: &index, count:1))
 
-        return NSData(data: results).subdataWithRange(NSMakeRange(0, outputSize))
+            hmac.updateWithData(counter)
+			let stepResult = hmac.finalData().withUnsafeBytes({ (hmacPtr) in
+				return Data(bytes:hmacPtr, count:hmac.finalData().count)
+			})
+			
+            
+            results.append(stepResult)
+            mixin = (stepResult as NSData).copy() as! Data
+        }
+		return Data(referencing: results).subdata(in: 0 ..< outputSize)
     }
     
 }
