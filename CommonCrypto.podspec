@@ -78,7 +78,7 @@ Pod::Spec.new do |s|
   #  For header files it will include any header in the folder.
   #  Not including the public_header_files will make all headers public.
   #
-  s.source_files = 'CommonCrypto/**/*.{modulemap,xcconfig}'
+  s.source_files = 'CommonCrypto/**/*.{modulemap}'
 
 
   # ――― Project Linking ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
@@ -104,6 +104,13 @@ Pod::Spec.new do |s|
 
   s.pod_target_xcconfig = {
 	   'SWIFT_INCLUDE_PATHS' => '$(PODS_TARGET_SRCROOT)/CommonCrypto',
+     'MODULEMAP_FILE[sdk=iphoneos*]' => '$(SRCROOT)/CommonCrypto/iphoneos.modulemap',
+     'MODULEMAP_FILE[sdk=iphonesimulator*]' => '$(SRCROOT)/CommonCrypto/iphonesimulator.modulemap',
+     'MODULEMAP_FILE[sdk=watchos*]' => '$(SRCROOT)/CommonCrypto/watchos.modulemap',
+     'MODULEMAP_FILE[sdk=watchsimulator*]' => '$(SRCROOT)/CommonCrypto/watchsimulator.modulemap',
+     'MODULEMAP_FILE[sdk=macosx*]' => '$(SRCROOT)/CommonCrypto/macosx.modulemap',
+     'MODULEMAP_FILE[sdk=appletvos*]' => '$(SRCROOT)/CommonCrypto/appletvos.modulemap',
+     'MODULEMAP_FILE[sdk=appletvsimulator*]' => '$(SRCROOT)/CommonCrypto/appletvsimulator.modulemap'
   }
 
   # s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
